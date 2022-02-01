@@ -43,9 +43,9 @@ def ID_compartor(ID, ID_df, DM_df, date_init, date_end, foldername):
     fig.savefig(f'Lineplots/{foldername}/ID{ID}.png')
 
 # Calling comparator
-date_init = pd.Timestamp('2016-09-21 00:00:00')
-date_end = pd.Timestamp('2016-12-21 00:00:00')
-folder_name = "Summer 2016"
+date_init = pd.Timestamp('2019-03-06 00:00:00') - pd.Timedelta('7d')
+date_end = pd.Timestamp('2019-03-06 23:00:00') - pd.Timedelta('1d')
+folder_name = "1 week before March the 6th 2016"
 ID_compartor(1, ID1_df, DM_df, date_init, date_end, folder_name)
 ID_compartor(2, ID2_df, DM_df, date_init, date_end, folder_name)
 ID_compartor(3, ID3_df, DM_df, date_init, date_end, folder_name)

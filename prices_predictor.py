@@ -9,8 +9,8 @@ from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import tensorflow as tf
 #%% General parameters
-first_day = '2019-03-06'        # Starting day YYY-MM-DD
-last_day = '2019-03-06'          # Ending day YYY-MM-DD
+first_day = '2019-03-06'        # Starting day YYYY-MM-DD
+last_day = '2019-03-06'         # Ending day YYYY-MM-DD
 train_length = 100              # [Days] Training data length for ANN
 Dataset = {}                    # Dataset dictionary
 #%% Loading datasets

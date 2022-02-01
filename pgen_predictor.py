@@ -19,18 +19,15 @@ warnings.simplefilter('ignore', ConvergenceWarning)
 warnings.simplefilter('ignore', UserWarning)
 #%% General parameters
 # Forecast parameters
-hours = [-12, -23]
-hours.extend(range(0,23))
-# hours = [6]
-hours = [-12, -23, 6, 12, 18]
-# hours = [-12]
-SARIMA_train_length = 5                      # [days] Training set length for SARIMA prediction
+hours = [-12, -4, 1, 4, 8, 12]
+labels = ['DM', 'ID2', 'ID3', 'ID4', 'ID5', 'ID6']
+SARIMA_train_length = 5                     # [days] Training set length for SARIMA prediction
 day = '2019-03-06'
 # Random forest regressor parameters
 day_rf = '2019-06-01'
 # SARIMA parameters
-model_order = (2,0,3)                      # Order
-model_seasonal_order = (2,1,3,24)            # Seasonal order
+model_order = (2,0,3)                       # Order
+model_seasonal_order = (2,1,3,24)           # Seasonal order
 # Storage variables
 Predictions = {}
 windspe_errors = []
@@ -120,8 +117,8 @@ for i, hour in enumerate(hours):
         Predictions['Pgen_real'] = Pgen_real
         Predictions['windspe_real'] = windspe_real
     # Saving prediction arrays
-    Predictions['Pgen_pred_{}'.format(hour)] = Pgen_pred
-    Predictions['windspe_pred_{}'.format(hour)] = windspe_pred
+    Predictions['Pgen_pred_{}'.format(labels[i])] = Pgen_pred
+    Predictions['windspe_pred_{}'.format(labels[i])] = windspe_pred
     # Printing results
     print("Wind speed prediction error: {} m/s".format(windspe_error))
     print("Mean hourly generation deviation: {} MWh".format(Pgen_error))
@@ -138,10 +135,10 @@ windspe_plot= fig.add_subplot(2, 1, 1)
 ticks_x = np.arange(0, len(hour_ticks), 1)  # Vertical grid spacing
 plt.xticks(np.arange(0, len(hour_ticks), 1), '', rotation=45)
 for i,hour in enumerate(Predictions['hours']):
-    windspe_pred_list = Predictions['windspe_pred_{}'.format(hour)].tolist()
+    windspe_pred_list = Predictions['windspe_pred_{}'.format(labels[i])].tolist()
     while len(windspe_pred_list) != len(hour_ticks):
         windspe_pred_list.insert(0,None)            # Filling with nones to the left to adjust plot length
-    plt.plot(windspe_pred_list, label=f'{hour}')
+    plt.plot(windspe_pred_list, label=f'{labels[i]}')
 plt.plot(Predictions['windspe_real'], '--', label='Observation')
 plt.ylabel('Wind speed (m/s)')
 plt.legend()
@@ -150,11 +147,11 @@ plt.grid()
 pgen_plot= fig.add_subplot(2, 1, 2)
 ticks_x = np.arange(0, len(hour_ticks), 1)
 plt.xticks(np.arange(0, len(hour_ticks), 1), hour_ticks, rotation=45)
-for hour in Predictions['hours']:
-    Pgen_pred_list = Predictions['Pgen_pred_{}'.format(hour)].tolist()
+for i, hour in enumerate(Predictions['hours']):
+    Pgen_pred_list = Predictions['Pgen_pred_{}'.format(labels[i])].tolist()
     while len(Pgen_pred_list) != len(hour_ticks):
         Pgen_pred_list.insert(0,None)               # Filling with nones to the left to adjust plot length
-    plt.plot(Pgen_pred_list, label=f'{hour}')
+    plt.plot(Pgen_pred_list, label=f'{labels[i]}')
 plt.plot(Predictions['Pgen_real'], '--', label='Observation')
 plt.ylabel('Generated power (MW)')
 plt.legend()
@@ -187,8 +184,8 @@ plt.show()
 Pgen_pred = {}
 Pgen_pred['Day'] = day
 Pgen_pred['hours'] = Predictions['hours']
-for hour in Predictions['hours']:
-    Pgen_pred['Pgen_pred_{}'.format(hour)] = Predictions['Pgen_pred_{}'.format(hour)]
+for i, hour in enumerate(Predictions['hours']):
+    Pgen_pred['Pgen_pred_{}'.format(labels[i])] = Predictions['Pgen_pred_{}'.format(labels[i])]
 Pgen_pred['Pgen_real'] = Predictions['Pgen_real']
 np.save('Pgen_pred.npy', Pgen_pred)
 #%% DISABLED: Seasonal analyis of training set
