@@ -14,7 +14,7 @@ ID5_df = pd.read_csv('Datasets/ID5.csv', sep=';', usecols=['value','datetime'], 
 ID6_df = pd.read_csv('Datasets/ID6.csv', sep=';', usecols=['value','datetime'], parse_dates=['datetime'], index_col="datetime")
 
 #%% Comparing MD & ID prices
-def ID_compartor(ID, ID_df, DM_df, date_init, date_end, foldername):
+def ID_comparator(ID, ID_df, DM_df, date_init, date_end, foldername):
     # Adjusting initial and end dates in case there is no ID at such hour
     while datetime.fromtimestamp(date_init.value / 1e9) not in ID_df.index:
         date_init = date_init + pd.Timedelta('1h')
@@ -46,12 +46,12 @@ def ID_compartor(ID, ID_df, DM_df, date_init, date_end, foldername):
 date_init = pd.Timestamp('2019-03-06 00:00:00') - pd.Timedelta('7d')
 date_end = pd.Timestamp('2019-03-06 23:00:00') - pd.Timedelta('1d')
 folder_name = "1 week before March the 6th 2016"
-ID_compartor(1, ID1_df, DM_df, date_init, date_end, folder_name)
-ID_compartor(2, ID2_df, DM_df, date_init, date_end, folder_name)
-ID_compartor(3, ID3_df, DM_df, date_init, date_end, folder_name)
-ID_compartor(4, ID4_df, DM_df, date_init, date_end, folder_name)
-ID_compartor(5, ID5_df, DM_df, date_init, date_end, folder_name)
-ID_compartor(6, ID6_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(1, ID1_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(2, ID2_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(3, ID3_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(4, ID4_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(5, ID5_df, DM_df, date_init, date_end, folder_name)
+ID_comparator(6, ID6_df, DM_df, date_init, date_end, folder_name)
 
 
 

@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 import statsmodels.api as sm
 import time
 import warnings
+from sklearn.ensemble import RandomForestRegressor as rf
+from sklearn.metrics import mean_absolute_error
 # Disabling Statsmodels ConvergenceWarning
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 warnings.simplefilter('ignore', ConvergenceWarning)
@@ -77,3 +79,31 @@ def pred_evaluator(y_pred, y_test):
         pred_error = 100 * (abs(y_test[i] - y_pred[i])) / y_test[i]
         pred_errors.append(pred_error)
     return round(np.mean(pred_errors),2)
+
+
+#%% Random forest estimator function
+def pgen_estimator(rf_train_x, rf_train_y, rf_depth, windspe_pred):
+    print('Generating wind power estimator with random forest')
+    # Building forest
+    forest_start = time.time()
+    rf_WindPower = rf(bootstrap = False, max_depth = rf_depth)
+    rf_WindPower.fit(rf_train_x, rf_train_y)
+    Pgen_pred = rf_WindPower.predict(windspe_pred.reshape(-1, 1))
+    print(f'Estimator generation time: {round(time.time() - forest_start, 2)}s')
+
+    return Pgen_pred
+#%% SARIMA prediction function
+def windspe_predictor(train_set, model_order, model_seasonal_order, hour):
+    print('******************************************************************')
+    print('Generating wind speed forecast, hour: {}'.format(hour))
+    SARIMA_start = time.time()
+    model = sm.tsa.SARIMAX(train_set, order=model_order, seasonal_order=model_seasonal_order,
+                            initialization='approximate_diffuse')
+    model_fit = model.fit(disp=False)
+    print(f'Prediction generation time: {round(time.time() - SARIMA_start, 2)}s')
+    prediction = model_fit.forecast(24-hour)
+    if hour < 0:
+        prediction = prediction[-24:]
+    else:
+        prediction = prediction[-(24-hour):]
+    return prediction
