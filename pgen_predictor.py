@@ -4,8 +4,8 @@ import time
 from matplotlib import pyplot as plt
 import os
 # from forecast_fcns import *
+import statsmodels.api as sm
 from aux_fcns import *
-from forecast_fcns import *
 #%% Manipulating libraries parameters for suiting the code
 # Making thight layout default on Matplotlib
 plt.rcParams['figure.autolayout'] = True
@@ -21,9 +21,8 @@ hours = [-12, -4, 1, 4, 8, 12]
 labels = ['DM', 'ID2', 'ID3', 'ID4', 'ID5', 'ID6']
 # hours = [-12]
 # labels = ['DM']
-SARIMA_train_length = 3     # [days] Training set length for SARIMA prediction
-day_start = '2018-03-01'
-day_end = '2018-03-01'
+day_start = '2018-01-01'
+day_end = '2018-12-31'
 day_start_ts = pd.Timestamp(day_start)
 day_end_ts = pd.Timestamp(day_end) + pd.Timedelta('23h')
 # Data import parameters
@@ -31,50 +30,51 @@ df_day_start = '2017-01-01'
 df_day_end = '2018-12-31'
 df_day_start_ts = pd.Timestamp(df_day_start)
 df_day_end_ts = pd.Timestamp(df_day_end) + pd.Timedelta('23h')
-# Random forest regressor parameters
-day_rf = day_start
-rf_train_length = 100
 # SARIMA parameters
+SARIMA_train_length = 3     # [days] Training set length for SARIMA prediction
 model_order = (2,0,3)                       # Order
-model_seasonal_order = (2,1,3,24)           # Seasonal order
+model_seasonal_order = (2,1,3,12)           # Seasonal order
 # Storage variables
 Pgen_pred_dict = {}
-Predictions = {}
-windspe_errors = []
-Pgen_errors = []
-save_folder = 'Tests plots' + '/March the 6th 2019 (only 6 forecasts)/'
+save_folder = 'Tests plots' + '/Testing Sotavento + Power curve/'
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
 #%% Preparing dataset
 # Importing data
 dataset_raw = pd.read_csv('Data/Sotavento Historical Data.csv', sep=';',parse_dates=['Date'], index_col="Date")
 # Slicing data
 dataset = dataset_raw[df_day_start_ts:df_day_end_ts]
 # Removing nans
-nans = dataset.isna().sum()
-print('Amount of nans: ')
-print(nans)
 dataset = dataset.fillna(method='ffill')
 #%% WORKBENCH: Implementing wind turbine power curve
 def WTG_curve(windspeed):
-    # Enercon E-126
-    speed = [0,1,2,3,4,5, 6,7,8,9,10, 11,12,13,14,15, 16,17,18,19,20, 21,22,23,24,25]
-    power = [0,0,0,0.1,0.3,0.4, 0.8,1.2,1.8,3,3.6, 4.8,5.65,6.4,7,7.3, 7.58,7.58,7.58,7.58,7.58, 7.58,7.58,7.58,7.58,7.58]
+    # Gamesa G128/4500
+    speed = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,
+             15.5,16,16.5,17,17.5,18,18.5,19,19.5,20,20.5,21,21.5,22,22.5,23,23.5,24,24.5,25,25.5,26,26.5,27]
+    power = [0,0,0,0,75,120,165,230,300,450,600,760,967,1250,1533,1870,2200,2620,3018,3450,3774,4080,4314,4430,4490,
+             4500,4500,4500,4500,4500,4500,4500,4500,4500,4500,4500,4500,4403,4306,4210,4113,4016,3919,3823,3725,3629,
+             3532,3435,3339,3242,3145,3048,2950,2855,2758]
     WTG_curve = {}
     for p,v in enumerate(speed):
-        WTG_curve[f'{v}'] = power[p]
+        WTG_curve[f'{v}'] = power[p]/1000
     Pgen = []
     for v in windspeed:
+        v = round(v * 2) / 2
         if v < 0 or v > speed[-1]:
             Pgen.append(WTG_curve[f'{0}'])
         else:
-            Pgen.append(WTG_curve[f'{round(v)}']*5)
+            Pgen.append(WTG_curve[f'{round(v)}'])
     return(Pgen)
 #%% Generate wind power prediction
 day = day_start_ts
 pred_start = time.time()
 while day != day_end_ts + pd.Timedelta('1h'):
+    print('***************************************************************')
     print(f'Generating prediction for {day.strftime("%Y-%m-%d")}')
     day_pred_start = time.time()
     Predictions = {}
+    windspe_errors = []
+    Pgen_errors = []
     for i, hour in enumerate(hours):
         hour_rf = pd.Timestamp(day) + pd.Timedelta(f'{hour}h')
         # Generating training sets
@@ -91,7 +91,20 @@ while day != day_end_ts + pd.Timedelta('1h'):
         windspe_real = windspe_real.astype(np.float)
         Pgen_real = WTG_curve(windspe_real)
         # Generating wind speed prediction
-        windspe_pred = windspe_predictor(SARIMA_train, model_order, model_seasonal_order, hour)
+        print('******************************************************************')
+        print('Generating wind speed forecast, hour: {}'.format(hour))
+        SARIMA_start = time.time()
+        model = sm.tsa.SARIMAX(SARIMA_train, order=model_order, seasonal_order=model_seasonal_order,
+                               initialization='approximate_diffuse')
+        model_fit = model.fit(disp=False)
+        print(f'Prediction generation time: {round(time.time() - SARIMA_start, 2)}s')
+        prediction = model_fit.forecast(24 - hour)
+        if hour < 0:
+            prediction = prediction[-24:]
+        else:
+            prediction = prediction[-(24 - hour):]
+        windspe_pred = prediction
+        # windspe_pred = windspe_predictor(SARIMA_train, model_order, model_seasonal_order, hour)
         # Generating wind power estimation
         Pgen_pred = WTG_curve(windspe_pred)
         # Analizing and storing prediction results
@@ -149,3 +162,6 @@ plt.legend()
 plt.grid()
 plt.savefig(save_folder + 'Prediction results')
 plt.show()
+
+#%% Saving results
+np.save('Pgen_pred.npy', Pgen_pred_dict)

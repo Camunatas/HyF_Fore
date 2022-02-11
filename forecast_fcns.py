@@ -99,7 +99,8 @@ def windspe_predictor(train_set, model_order, model_seasonal_order, hour):
     SARIMA_start = time.time()
     model = sm.tsa.SARIMAX(train_set, order=model_order, seasonal_order=model_seasonal_order,
                             initialization='approximate_diffuse')
-    model_fit = model.fit(disp=False)
+    model_fit = model.fit()
+    # model_fit = model.fit(disp=False)
     print(f'Prediction generation time: {round(time.time() - SARIMA_start, 2)}s')
     prediction = model_fit.forecast(24-hour)
     if hour < 0:
