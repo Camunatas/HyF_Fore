@@ -126,7 +126,7 @@ while day != day_end_ts + pd.Timedelta('1h'):
     Pgen_pred_dict[day.strftime("%Y-%m-%d")] = Predictions
     print(f'Day elapsed time: {round(time.time() - day_pred_start, 2)}s')
     day = day + pd.Timedelta('1d')
-print(f'Day elapsed time: {round((time.time() - pred_start)/3600, 2)}h')
+print(f'Total elapsed time: {round((time.time() - pred_start)/3600, 2)}h')
 
 #%% Plotting results
 day = day_start
