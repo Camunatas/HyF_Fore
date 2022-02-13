@@ -12,7 +12,9 @@ starting_day =  '2018-01-01 00:00:00'               # First day to evaluate
 ending_day =  '2018-12-31 00:00:00'                 # last day to evaluate
 Dataset = {}
 #%% Loading external datasets
-Prices_dataset = np.load('Price_pred.npy', allow_pickle=True).item()
+Price_pred_DM_dataset = np.load('Price_pred.npy', allow_pickle=True).item()
+Price_real_DM_df = pd.read_csv('Data/Prices.csv', sep=';', usecols=['Price','Hour'],
+                     parse_dates=['Hour'], index_col="Hour")
 Pgen_dataset = np.load('Pgen_pred.npy', allow_pickle=True).item()
 ID1_df = pd.read_csv('Data/ID1.csv', sep=';', usecols=['value','datetime'],
                      parse_dates=['datetime'], index_col="datetime")
@@ -41,6 +43,7 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
         Daily_dict[f'{key}'] = Pgen_day_dict[f'{key}']
     # Storing DM price
     Daily_dict['Price_pred_DM'] = Prices_dataset[daily_key]
+    Daily_dict['Price_real_DM'] = Price_real_DM_df[f'{daily_key}'].iloc[:,0].values
     # Storing ID prices
     Daily_dict['Price_real_ID2'] = ID2_df[f'{daily_key}'].iloc[:,0].values
     Daily_dict['Price_real_ID3'] = ID3_df[f'{daily_key}'].iloc[:,0].values
@@ -56,5 +59,6 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     # Updating day
     day = pd.Timestamp(day) + pd.Timedelta('1d')
 
+print('Dataset generated')
 np.save('Dataset.npy', Dataset)
 #%% Saving data into dictionary
