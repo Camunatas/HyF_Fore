@@ -12,6 +12,7 @@ import concurrent.futures
 import os
 from datetime import timezone
 import time
+from aux_fcns import *
 #%% Manipulating libraries parameters for suiting the code
 # Making thight layout default on Matplotlib
 plt.rcParams['figure.autolayout'] = True
@@ -21,22 +22,23 @@ warnings.simplefilter('ignore', ConvergenceWarning)
 warnings.simplefilter('ignore', UserWarning)
 #%% Initializing parameters
 # Control variables
-starting_day =  '2018-01-01 00:00:00'               # First day to evaluate
-ending_day =  '2028-12-31 00:00:00'                 # last day to evaluate
+starting_day =  '2015-01-01 00:00:00'               # First day to evaluate
+ending_day =  '2020-12-31 00:00:00'                 # last day to evaluate
 # SARIMa model parameters
 train_length = 100                          # Training set length (days)
 model_order = (2, 1, 3)                      # SARIMA order
 model_seasonal_order = (1, 0, 1, 24)        # SARIMA seasonal order
 # Auxiliary variables
 Price_pred_dict = {}
-now = datetime.datetime.now()           # Simulation time
+now = time.time()           # Simulation time
 #%% Importing price data from csv
 prices_df = pd.read_csv('Data/Prices.csv', sep=';', usecols=["Price","datetime"], parse_dates=['datetime'],
                         index_col="datetime")
 prices_df = prices_df.asfreq('h')
 
 #%% Launching algorithm
-day = starting_day
+day = '2018-04-19 00:00:00'
+ending_day = day
 while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     day_pred_start = time.time()
     # Initializing daily variables
@@ -69,8 +71,18 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     # Updating day variables
     day = pd.Timestamp(day) + pd.Timedelta('1d')
     print(f'Day elapsed time: {round(time.time() - day_pred_start, 2)}s')
-print(f'Total elapsed time: {round(time.time() - now, 2)}s')
+# print(f'Total elapsed time: {round(time.time() - now, 2)}s')
+#%% Plotting last day predicted (for paper)
+hour_ticks = hourly_xticks(0)
+ticks_x = np.arange(0, len(hour_ticks), 1)
+plt.xticks(np.arange(0, len(hour_ticks), 1), hour_ticks, rotation=45)
+plt.plot(daily_direct_forecast, label='Predicted')
+plt.plot(test_set.values, label='Real')
+plt.ylabel('Price (€/MWh)')
+plt.grid()
+plt.legend()
+plt.show()
 #%%
 # Saving results
-np.save('Price_pred.npy', Price_pred_dict)
+# np.save('Price_pred.npy', Price_pred_dict)
 
