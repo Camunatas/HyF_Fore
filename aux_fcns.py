@@ -6,8 +6,9 @@ def SARIMA_train_set_gen(day, dataset, hour, train_length):
     day_utc = pd.Timestamp(day)
     train_end = day_utc + pd.Timedelta('{}h'.format(hour-1))
     train_start = train_end - pd.Timedelta('{}d'.format(train_length))
-    train_set = dataset[train_start:train_end].iloc[:, 0].values
-    train_set = train_set.astype(np.float)
+    # train_set = dataset[train_start:train_end].values
+    train_set = dataset.loc[train_start.strftime('%Y-%m-%d'):train_end.strftime('%Y-%m-%d')].values
+    train_set = train_set.astype(float)
     return train_set
 
 # Train set splitter for random forest

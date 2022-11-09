@@ -22,12 +22,15 @@ warnings.simplefilter('ignore', ConvergenceWarning)
 warnings.simplefilter('ignore', UserWarning)
 #%% Initializing parameters
 # Control variables
-starting_day =  '2015-01-01 00:00:00'               # First day to evaluate
-ending_day =  '2020-12-31 00:00:00'                 # last day to evaluate
+# starting_day =  '2017-01-01 00:00:00'               # First day to evaluate
+# ending_day =  '2021-12-31 00:00:00'                 # last day to evaluate
+starting_day =  '2021-03-01 00:00:00'               # First day to evaluate
+ending_day =  '2021-03-31 00:00:00'                 # last day to evaluate
 # SARIMa model parameters
 train_length = 100                          # Training set length (days)
-model_order = (2, 1, 3)                      # SARIMA order
+model_order = (2, 1, 3)                     # SARIMA order
 model_seasonal_order = (1, 0, 1, 24)        # SARIMA seasonal order
+n_scenarios = 1000                          # Number of daily scenarios
 # Auxiliary variables
 Price_pred_dict = {}
 now = time.time()           # Simulation time
@@ -37,14 +40,11 @@ prices_df = pd.read_csv('Data/Prices.csv', sep=';', usecols=["Price","datetime"]
 prices_df = prices_df.asfreq('h')
 
 #%% Launching algorithm
-day = '2018-04-19 00:00:00'
-ending_day = day
+day = starting_day
 while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     day_pred_start = time.time()
     # Initializing daily variables
     daily_direct_forecast = []                # Array with forecasted prices
-    daily_direct_P = []                       # Array with direct schedule powers
-    daily_direct_SOC = []                     # Array with direct schedule SOCs
 
     # Generating training set
     day_utc = pd.Timestamp(day).replace(tzinfo=timezone.utc)
@@ -64,25 +64,39 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     prediction = model_fit.forecast(len(test_set))
     for i in range(len(test_set)):
         daily_direct_forecast.append(prediction.iloc[i])
-
+    # Generating prediction scenarios
+    new_scenarios = model_fit.simulate(nsimulations=len(test_set), repetitions=n_scenarios, anchor='end')
+    scenarios = {}
+    for scenario in range(n_scenarios):
+        scenarios[f'{scenario}'] = new_scenarios[('Price', scenario)].values
     # Storing data
-    Price_pred_dict[pd.Timestamp(day).strftime("%Y-%m-%d")] = daily_direct_forecast
+    daily_dict = {}
+    daily_dict['Real prices'] = test_set
+    daily_dict['Price pred'] = daily_direct_forecast
+    daily_dict['Price scenarios']  = scenarios
+    Price_pred_dict[pd.Timestamp(day).strftime("%Y-%m-%d")] = daily_dict
     print('Generated for {}'.format(pd.Timestamp(day).strftime("%Y-%m-%d")))
     # Updating day variables
     day = pd.Timestamp(day) + pd.Timedelta('1d')
     print(f'Day elapsed time: {round(time.time() - day_pred_start, 2)}s')
-# print(f'Total elapsed time: {round(time.time() - now, 2)}s')
+print(f'Total elapsed time: {round(time.time() - now, 2)}s')
 #%% Plotting last day predicted (for paper)
-hour_ticks = hourly_xticks(0)
-ticks_x = np.arange(0, len(hour_ticks), 1)
-plt.xticks(np.arange(0, len(hour_ticks), 1), hour_ticks, rotation=45)
-plt.plot(daily_direct_forecast, label='Predicted')
-plt.plot(test_set.values, label='Real')
-plt.ylabel('Price (€/MWh)')
-plt.grid()
-plt.legend()
-plt.show()
-#%%
-# Saving results
-# np.save('Price_pred.npy', Price_pred_dict)
+# hour_ticks = hourly_xticks(0)
+# ticks_x = np.arange(0, len(hour_ticks), 1)
+# plt.xticks(np.arange(0, len(hour_ticks), 1), hour_ticks, rotation=45)
+# plt.plot(daily_direct_forecast, label='Predicted')
+# plt.plot(test_set.values, label='Real')
+# plt.ylabel('Price (€/MWh)')
+# plt.grid()
+# plt.legend()
+# plt.show()
+#%% Plotting last day scenarios (for paper)
+# fig = plt.figure('Scenarios)
+# for i in range(len(scenarios)):
+#     plt.plot(scenarios["{}".format(i)], c=np.random.rand(3))
+#     plt.xlabel("Hour")
+#     plt.ylabel('Price (€/MWh)')
+# plt.grid()
+#%% Saving results
+np.save('Price_pred.npy', Price_pred_dict)
 
