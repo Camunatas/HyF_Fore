@@ -23,7 +23,7 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
     prices_day_dict = Prices_dataset[daily_key]
     Daily_dict['price_pred'] = prices_day_dict['Price pred']
     Daily_dict['price_scenarios'] = prices_day_dict['Price scenarios']
-    Daily_dict['price_real'] = prices_day_dict['Real prices']
+    Daily_dict['price_real'] = [float(a) for a in prices_day_dict['Real prices'].values]
     # Storing on general dataset
     Dataset[pd.Timestamp(day).strftime("%Y-%m-%d")] = Daily_dict
     print(f"Saved day {day}")
@@ -35,3 +35,6 @@ while day != pd.Timestamp(ending_day) + pd.Timedelta('1d'):
 print('Dataset generated')
 #%% Saving data into dictionary
 np.save('Dataset.npy', Dataset)
+
+#%%
+
